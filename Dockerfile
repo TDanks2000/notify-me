@@ -1,22 +1,23 @@
-# Use the Node.js base image
-FROM node:18
+# 1. Use the latest Node.js image (v23)
+FROM node:23
 
-# Install Bun
-RUN curl -fsSL https://bun.sh/install | bash
+# 2. Enable Corepack (bundled with Node 18+) so `yarn` is available
+RUN corepack enable
 
-# Set the working directory inside the container
+# 3. Set working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and install dependencies
-COPY package.json ./
-COPY bun.lock ./
-RUN bun install
+# 4. Copy only the lockfile and manifest for install
+COPY package.json yarn.lock ./
 
-# Copy the rest of the application files
+# 5. Install prod dependencies only & honor the lockfile
+RUN yarn install --frozen-lockfile --production
+
+# 6. Copy the rest of your source code
 COPY . .
 
-# Expose the application port (if needed)
+# 7. Expose the application port
 EXPOSE 3000
 
-# Run the app
-CMD ["bun", "start"]
+# 8. Default command
+CMD ["yarn", "start"]
