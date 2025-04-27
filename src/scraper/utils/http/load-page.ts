@@ -19,9 +19,12 @@ export async function loadPage(
     launchArgs.push(`--proxy-server=${options.proxy}`);
   }
 
+  const executablePath = process.env.CHROME_EXECUTABLE_PATH;
+
   const browser = await puppeteer.launch({
     headless: options.headless !== false,
     args: launchArgs,
+    ...(executablePath ? { executablePath: executablePath } : {}),
   });
 
   const page = await browser.newPage();
