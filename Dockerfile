@@ -1,59 +1,32 @@
 FROM oven/bun:latest
 
+# Puppeteer skips downloading Chromium — we'll provide our own
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 WORKDIR /usr/src/app
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Install system dependencies for headless Chrome
+RUN apt-get update && apt-get install -y \
+    wget gnupg ca-certificates fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 libatk1.0-0 libcups2 \
+    libdbus-1-3 libgdk-pixbuf2.0-0 libnspr4 libnss3 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 xdg-utils \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libc6 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libexpat1 \
-    libfontconfig1 \
-    libgbm1 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    lsb-release \
-    wget \
-    xdg-utils \
-    libu2f-udev \
-    && rm -rf /var/lib/apt/lists/*
+# Install Google Chrome Stable
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/google.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/google.gpg arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list && \
+    apt-get update && \
+    apt-get install -y google-chrome-stable --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN groupadd --gid 1001 bun && \
-    useradd --uid 1001 --gid bun --shell /bin/bash --create-home bun
+# Copy your app
+COPY . .
 
-COPY --chown=bun:bun bun.lock package.json ./
+# Install dependencies using Bun
 RUN bun install --frozen-lockfile
 
-COPY --chown=bun:bun . .
-
-USER bun
-
+# Expose your app port
 EXPOSE 3000
 
+# Run your app with env file
 CMD ["bun", "run", "src/index.ts"]
