@@ -9,7 +9,7 @@ export async function loadPage(
   url: string,
   options: LoadPageOptions = {}
 ): Promise<{ browser: Browser; page: Page }> {
-  const launchArgs: string[] = [];
+  const launchArgs: string[] = ["--no-sandbox", "--disable-setuid-sandbox"];
   if (options.windowSize) {
     launchArgs.push(
       `--window-size=${options.windowSize.width},${options.windowSize.height}`
