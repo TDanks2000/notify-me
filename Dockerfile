@@ -1,23 +1,20 @@
-# 1. Use the latest Node.js image (v23)
-FROM node:23
+# Use the official Bun image
+FROM oven/bun:latest
 
-# 2. Enable Corepack (bundled with Node 18+) so `yarn` is available
-RUN corepack enable
-
-# 3. Set working directory
+# Set working directory
 WORKDIR /usr/src/app
 
-# 4. Copy only the lockfile and manifest for install
-COPY package.json yarn.lock ./
+# Copy manifest and lockfile
+COPY package.json bun.lock ./
 
-# 5. Install prod dependencies only & honor the lockfile
-RUN yarn install --frozen-lockfile --production
+# Install dependencies exactly as in bun.lock
+RUN bun install --frozen-lockfile
 
-# 6. Copy the rest of your source code
+# Copy the rest of your app
 COPY . .
 
-# 7. Expose the application port
+# Expose your app port
 EXPOSE 3000
 
-# 8. Default command
-CMD ["yarn", "start"]
+# Start the app
+CMD ["bun", "run", "start"]
