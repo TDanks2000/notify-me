@@ -22,7 +22,7 @@ export async function loadPage(
   const executablePath = process.env.CHROME_EXECUTABLE_PATH;
 
   const browser = await puppeteer.launch({
-    headless: options.headless !== false,
+    headless: true,
     args: launchArgs,
     ...(executablePath ? { executablePath: executablePath } : {}),
   });
