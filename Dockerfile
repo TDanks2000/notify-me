@@ -9,7 +9,7 @@ WORKDIR /usr/src/app
 
 # Copy package.json and install dependencies
 COPY package.json ./
-COPY bun.lockb ./
+COPY bun.lock ./
 RUN bun install
 
 # Copy the rest of the application files
