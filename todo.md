@@ -1,2 +1,0 @@
-- [ ] use discord api to send a message to a channel @-ing my account when it's time to do something
-- [ ] use discord to adjust settings in this codebase
