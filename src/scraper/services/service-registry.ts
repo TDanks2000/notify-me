@@ -78,6 +78,9 @@ export class ServiceRegistry {
     page?: Page,
     currentMethod: FetchMethod = "puppeteer"
   ) {
+    // Use the provided currentMethod or fall back to service's initialFetchMethod if available
+    currentMethod = currentMethod || service.initialFetchMethod || "puppeteer";
+
     // init stats
     this.stats.set(service, {
       processedUrls: 0,
@@ -118,13 +121,20 @@ export class ServiceRegistry {
           service.onResponse && page.on("response", service.onResponse);
         }
 
+        // Create a retryWith function that updates the context
+        const retryWithAndUpdateContext = async (method: FetchMethod) => {
+          await retryWith(method);
+          // The retryWith function already updates currentMethod and page
+          return;
+        };
+
         // build context
         const ctx: ServiceRunContext = {
           url,
           html,
           fetchMethod: currentMethod,
           page,
-          retryWith,
+          retryWith: retryWithAndUpdateContext,
           log: (msg) => this.log(`[${service.constructor.name}] ${msg}`),
           cache: this.cache,
           stats: this.stats.get(service)!,
@@ -160,8 +170,10 @@ export class ServiceRegistry {
             const svc = queue.shift()!;
             const page = await browser.newPage();
             try {
-              let currentMethod: FetchMethod =
-                svc.initialFetchMethod ?? "puppeteer"; // default to puppeteer
+              // Get the initialFetchMethod from the service or default to puppeteer
+              const currentMethod: FetchMethod =
+                svc.initialFetchMethod ?? "puppeteer";
+              // Pass the currentMethod to runService to ensure it's respected
               await this.runService(svc, page, currentMethod);
             } finally {
               await page.close();
