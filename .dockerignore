@@ -1,0 +1,8 @@
+node_modules
+bun.lockb
+Dockerfile
+.dockerignore
+.git
+.gitignore
+*.md
+*.env
