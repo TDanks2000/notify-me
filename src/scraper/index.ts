@@ -11,7 +11,7 @@ export const discordClient = new DiscordClient();
 export const registry = new ServiceRegistry({
   useFileRouter: true,
   fileRouterPath: servicesPath,
-  debug: false,
+  debug: true,
   concurrencyLimit: 2,
   headless: false,
   browserOptions: {

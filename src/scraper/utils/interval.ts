@@ -11,34 +11,71 @@ export const runAll = async () => {
   }
 };
 
-let intervalId: NodeJS.Timeout | null = null;
-const interval = ms("1h");
+let initialTimeout: NodeJS.Timeout | null = null;
+let intervalId: NodeJS.Timeout | null  = null;
+
+// your desired repeat interval (changed to 5 minutes):
+const interval = ms("5m");
+
+function getMsToNextAlignment(intervalMs: number): number {
+  const now = new Date();
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+  const msPart  = now.getMilliseconds();
+
+  const intervalMin = intervalMs / 60_000;
+  if (!Number.isInteger(intervalMin)) {
+    throw new Error("interval must be a whole number of minutes");
+  }
+
+  // how many minutes past the last multiple?
+  const past = minutes % intervalMin;
+  // minutes until next multiple:
+  let minsToAdd = past === 0 && (seconds > 0 || msPart > 0)
+    ? intervalMin
+    : (intervalMin - past) % intervalMin;
+
+  // compute target time
+  const target = new Date(now);
+  target.setMinutes(minutes + minsToAdd, 0, 0);
+
+  return target.getTime() - now.getTime();
+}
 
 export const startInterval = (): string => {
-  if (intervalId) {
-    console.log("Interval is already running.");
+  if (initialTimeout || intervalId) {
     return "Interval is already running.";
   }
 
-  console.log("Starting interval...");
-  intervalId = setInterval(async () => {
-    console.log("Executing registry.runAll()...");
-    await runAll();
-  }, interval);
+  // schedule first run at the next aligned clock-time
+  const delay = getMsToNextAlignment(interval);
+  console.log(`First run will start in ${delay}ms`);
 
-  console.log("Interval started.");
-  return "Interval started.";
+  initialTimeout = setTimeout(async () => {
+    console.log("Executing initial registry.runAll() at alignment...");
+    await runAll();
+
+    // then every `interval`
+    intervalId = setInterval(async () => {
+      console.log("Executing registry.runAll()...");
+      await runAll();
+    }, interval);
+
+    initialTimeout = null;
+  }, delay);
+
+  return "Interval scheduled (will align to clock).";
 };
 
 export const stopInterval = (): string => {
-  if (!intervalId) {
-    console.log("No interval to stop.");
-    return "No interval to stop.";
+  if (initialTimeout) {
+    clearTimeout(initialTimeout);
+    initialTimeout = null;
   }
-
-  clearInterval(intervalId);
-  intervalId = null; // Reset the intervalId
-  console.log("Interval stopped.");
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
   return "Interval stopped.";
 };
 
@@ -48,6 +85,5 @@ export const toggleInterval = (mode?: modeEnum): string => {
   } else if (mode === "stop") {
     return stopInterval();
   }
-
-  return intervalId ? stopInterval() : startInterval();
+  return (initialTimeout || intervalId) ? stopInterval() : startInterval();
 };
