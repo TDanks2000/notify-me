@@ -13,7 +13,6 @@ const DEFAULT_CONCURRENCY = 5;
 
 export class ServiceRegistry {
   private services: Service[] = [];
-  private cache = new Map<string, string>();
   private stats = new Map<Service, ServiceStats>();
   private initialized = false;
 
@@ -97,8 +96,7 @@ export class ServiceRegistry {
           method,
           page,
           this.options.headless,
-          this.options.browserOptions,
-          this.cache
+          this.options.browserOptions
         );
         currentMethod = method;
         page = result.page;
@@ -111,8 +109,7 @@ export class ServiceRegistry {
           currentMethod,
           page,
           this.options.headless,
-          this.options.browserOptions,
-          this.cache
+          this.options.browserOptions
         );
 
         // attach interceptors
@@ -136,7 +133,6 @@ export class ServiceRegistry {
           page,
           retryWith: retryWithAndUpdateContext,
           log: (msg) => this.log(`[${service.constructor.name}] ${msg}`),
-          cache: this.cache,
           stats: this.stats.get(service)!,
         };
 
@@ -170,10 +166,8 @@ export class ServiceRegistry {
             const svc = queue.shift()!;
             const page = await browser.newPage();
             try {
-              // Get the initialFetchMethod from the service or default to puppeteer
               const currentMethod: FetchMethod =
                 svc.initialFetchMethod ?? "puppeteer";
-              // Pass the currentMethod to runService to ensure it's respected
               await this.runService(svc, page, currentMethod);
             } finally {
               await page.close();

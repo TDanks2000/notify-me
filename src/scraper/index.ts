@@ -13,7 +13,7 @@ export const registry = new ServiceRegistry({
   fileRouterPath: servicesPath,
   debug: true,
   concurrencyLimit: 2,
-  headless: false,
+  headless: true,
   browserOptions: {
     windowSize: {
       width: 100,
