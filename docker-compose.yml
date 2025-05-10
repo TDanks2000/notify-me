@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notify-me
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    volumes:
+      # For persistent data and configuration
+      - ./data:/usr/src/app/data
+      # Mount your .env file for environment variables
+      - ./.env:/usr/src/app/.env:ro
+    # If your bot exposes any ports (like a web interface)
+    ports:
+      - "3000:3000"
+    # Set resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+# Define a named volume for persistent data
+volumes:
+  data:
+    driver: local
